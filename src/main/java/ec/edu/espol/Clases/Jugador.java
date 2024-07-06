@@ -1,5 +1,4 @@
 package ec.edu.espol.Clases;
-
 import java.util.ArrayList;
 
 public class Jugador {
