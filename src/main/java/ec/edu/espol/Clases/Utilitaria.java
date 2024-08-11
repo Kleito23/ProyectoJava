@@ -1,11 +1,17 @@
 package ec.edu.espol.Clases;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class Utilitaria {
     public static void esperar(int s){
+        Logger log = Logger.getLogger(Utilitaria.class.getName());
         try{
-            Thread.sleep(s*1000);
-        }catch(Exception e){
-            e.printStackTrace();
+
+            Thread.sleep(s*1000L);
+        }catch(InterruptedException e){
+            log.log(Level.WARNING, "Interrumpido", e);
+            Thread.currentThread().interrupt();
         }
     }
 }

@@ -8,7 +8,7 @@ public abstract class Carta {
     protected Color color;
     protected String valor;
 
-    public Carta(Color color, String valor) {
+    protected Carta(Color color, String valor) {
         this.color = color;
         this.valor = valor;
         comodines = new ArrayList<>();
@@ -17,6 +17,9 @@ public abstract class Carta {
 
     public Color getColor() {
         return color;
+    }
+    public String getColorStr(){
+        return color.toString();
     }
     public String getValor() {
         return valor;

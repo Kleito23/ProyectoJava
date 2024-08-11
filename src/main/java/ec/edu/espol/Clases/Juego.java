@@ -13,6 +13,7 @@ public class Juego {
     private ArrayList<Carta> lineaJuego;
     private static Color color;
     private static boolean turno = true;
+    private Random random = new Random();
 
     public Juego(Jugador jugador){
         baraja = new Baraja();
@@ -23,7 +24,6 @@ public class Juego {
 
 
     private Carta tomarCartaAzar(){
-        Random random = new Random();
         Carta c;
         do{
             c = baraja.getCarta(random.nextInt(baraja.getCartas().size()));
@@ -44,15 +44,14 @@ public class Juego {
         System.out.println(p);
     }
 
-    private void repartirCartas(){
+    public void repartirCartas(){
         int cont = 0;
-        Random r = new Random();
         while(cont < 7){
-            Carta c = baraja.getCarta(r.nextInt(baraja.getCartas().size()));
+            Carta c = baraja.getCarta(random.nextInt(baraja.getCartas().size()));
             jugador.addCarta(c);
             baraja.eliminarCarta(c);
             
-            Carta c2 = baraja.getCarta(r.nextInt(baraja.getCartas().size()));
+            Carta c2 = baraja.getCarta(random.nextInt(baraja.getCartas().size()));
             manoMaquina.add(c2);
             baraja.eliminarCarta(c2);
 
@@ -81,6 +80,116 @@ public class Juego {
             baraja.getCartas().remove(j);
         }
     }
+    
+    public void lanzarComodinMaquina(Carta c, Color color){
+        if(c.getColor() == Color.N){
+            do{
+                Color[] colores = Color.values();
+                Color col = colores[random.nextInt(colores.length-1)];
+                actualizarColor(col);
+            }while(color == Color.N);
+            
+            System.out.println("La maquina escogio el color: " + color);
+            if(c.getValor().equals("+2")){
+                agregarCartaMano(2,jugador.getCartas());
+                System.out.println("Se te agregó dos cartas a la mano!");
+                
+            }else if(c.getValor().equals("+4")){
+                agregarCartaMano(4, jugador.getCartas());
+                System.out.println("Se te agregó cuatro cartas a la mano!");
+                
+            }
+        }else{
+            if(c.getValor().equals("+2")){
+                agregarCartaMano(2,jugador.getCartas());
+                System.out.println("Se te agregó dos cartas a la mano!");
+                
+            }else if(c.getValor().equals("+4")){
+                agregarCartaMano(4, jugador.getCartas());
+                System.out.println("Se te agregó cuatro cartas a la mano!");
+                
+            }else if(c.getValor().equals("^") || c.getValor().equals("&") ){
+                actualizarTurno(false);
+                System.out.println("Perdiste el turno!");
+            }
+            actualizarColor(color);
+        }
+    }
+
+    public void lanzarComodinJugador(Carta c, Color color, Scanner sc){
+        if(c.getColor() == Color.N){
+            System.out.println("Ingrese el color que desea (R,A,V,Z): ");
+            String col = sc.nextLine();
+            actualizarColor(Color.valueOf(col.toUpperCase()));
+
+            System.out.println("El color ha cambiado a: " + color);
+            if(c.getValor().equals("+2")){
+                agregarCartaMano(2, manoMaquina);
+                System.out.println("Se ha agregado dos cartas al oponente");
+            }else if(c.getValor().equals("+4")){
+                agregarCartaMano(4, manoMaquina);
+                System.out.println("Se ha agregado cuatro cartas al oponente!");
+            }
+        }else{
+            if(c.getValor().equals("+2")){
+                agregarCartaMano(2, manoMaquina);
+                System.out.println("Se ha agregado dos cartas al oponente");
+            }else if(c.getValor().equals("+4")){
+                agregarCartaMano(4, manoMaquina);
+                System.out.println("Se ha agregado cuatro cartas al oponente!");
+            }else if(c.getValor().equals("^") || c.getValor().equals("&") ){
+                actualizarTurno(false);
+                System.out.println("La maquina pierde el turno!");
+            }
+            actualizarColor(color);
+        }
+    }
+
+    public static void actualizarColor(Color c){
+        color = c;
+    }
+
+    public static void actualizarTurno(boolean t){
+        turno = t;
+    }
+
+    public boolean lanzarCarta(Carta c, Boolean maquina){
+        if(c.getColor() == color || c.getValor().equals(lineaJuego.get(0).getValor())){
+            lineaJuego.add(0,c);
+            if(maquina){
+                manoMaquina.remove(c);
+            }else{
+                jugador.getCartas().remove(c);
+            }
+            actualizarColor(color);
+            
+            return true;
+        }else{
+            return false;
+        }
+    }
+
+    public boolean lanzarCartaComodin(Carta c, boolean maquina, Scanner sc){
+        if(maquina){
+            if(c.getColor() == color || c.getColor() == Color.N){
+                lanzarComodinMaquina(c, color);
+            }else{
+                return false;
+            }
+            lineaJuego.add(0,c);
+            manoMaquina.remove(c);
+        }else{
+            if(c.getColor() == color || c.getColor() == Color.N){
+                lanzarComodinJugador(c, color, sc);
+            }else{
+                return false;
+            }
+            lineaJuego.add(0,c);
+            jugador.getCartas().remove(c);
+        }
+        return true;
+    }
+
 
     public boolean agregarCartaLinea(Carta c, Scanner sc, Boolean maquina){
         if(c == null){
@@ -90,96 +199,10 @@ public class Juego {
             System.out.println("La maquina escogió:" + c);
         }
         if(c instanceof CartaNumerica){
-            if(c.getColor() == color || c.getValor().equals(lineaJuego.get(0).getValor())){
-                lineaJuego.add(0,c);
-                if(maquina){
-                    manoMaquina.remove(c);
-                }else{
-                    jugador.getCartas().remove(c);
-                }
-                color = c.getColor();
-                
-                return true;
-            }else{
-                return false;
-            }
+            return lanzarCarta(c, maquina);
         }else{
-
-            if(maquina){
-                if(c.getColor() == color || c.getColor() == Color.N){
-                    Random random = new Random();
-                    if(c.getColor() == Color.N){
-                        do{
-                            Color[] colores = Color.values();
-                            Color col = colores[random.nextInt(colores.length-1)];
-                            color = col;
-                        }while(color == Color.N);
-                        
-                        System.out.println("La maquina escogio el color: " + color);
-                        if(c.getValor().equals("+2")){
-                            agregarCartaMano(2,jugador.getCartas());
-                            System.out.println("Se te agregó dos cartas a la mano!");
-                            
-                        }else if(c.getValor().equals("+4")){
-                            agregarCartaMano(4, jugador.getCartas());
-                            System.out.println("Se te agregó cuatro cartas a la mano!");
-                            
-                        }
-                    }else{
-                        if(c.getValor().equals("+2")){
-                            agregarCartaMano(2,jugador.getCartas());
-                            System.out.println("Se te agregó dos cartas a la mano!");
-                            
-                        }else if(c.getValor().equals("+4")){
-                            agregarCartaMano(4, jugador.getCartas());
-                            System.out.println("Se te agregó cuatro cartas a la mano!");
-                            
-                        }else if(c.getValor().equals("^") || c.getValor().equals("&") ){
-                            turno = false;
-                            System.out.println("Perdiste el turno!");
-                        }
-                        color = c.getColor();
-                    }
-                }else{
-                    return false;
-                }
-                lineaJuego.add(0,c);
-                manoMaquina.remove(c);
-            }else{
-                if(c.getColor() == color || c.getColor() == Color.N){
-                    if(c.getColor() == Color.N){
-                        System.out.println("Ingrese el color que desea (R,A,V,Z): ");
-                        String col = sc.nextLine();
-                        color = Color.valueOf(col.toUpperCase());
-
-                        System.out.println("El color ha cambiado a: " + color);
-                        if(c.getValor().equals("+2")){
-                            agregarCartaMano(2, manoMaquina);
-                            System.out.println("Se ha agregado dos cartas al oponente");
-                        }else if(c.getValor().equals("+4")){
-                            agregarCartaMano(4, manoMaquina);
-                            System.out.println("Se ha agregado cuatro cartas al oponente!");
-                        }
-                    }else{
-                        if(c.getValor().equals("+2")){
-                            agregarCartaMano(2, manoMaquina);
-                            System.out.println("Se ha agregado dos cartas al oponente");
-                        }else if(c.getValor().equals("+4")){
-                            agregarCartaMano(4, manoMaquina);
-                            System.out.println("Se ha agregado cuatro cartas al oponente!");
-                        }else if(c.getValor().equals("^") || c.getValor().equals("&") ){
-                            turno = false;
-                            System.out.println("La maquina pierde el turno!");
-                        }
-                        color = c.getColor();
-                    }
-                }else{
-                    return false;
-                }
-                lineaJuego.add(0,c);
-                jugador.getCartas().remove(c);
-            }
-            return true;
+            return lanzarCartaComodin(c, maquina, sc);
+            
         }
     }
 
@@ -197,18 +220,57 @@ public class Juego {
         }
     }
 
+    public boolean validarCartaJugador(boolean continuar, Scanner sc){
+        if(continuar == false){
+            System.out.println("Error, el color o numero no coincide. Intentar de nuevo? (Si/No)");
+            String r = sc.nextLine();
+            if(r.equalsIgnoreCase("si")){
+                return true;
+            }else{
+                jugador.getCartas().add(baraja.getCarta(0));
+                baraja.getCartas().remove(0);
+                System.out.println("Se ha agregado una carta a tu mano!");
+                return false;
+            }
+        }else{
+            return false;
+        }
+    }
+
+    public boolean continuarJuego(Jugador jugador){
+        if(jugador.getCartas().size() == 1 || manoMaquina.size() == 1){
+            System.out.println("UNO!");
+        }
+        if(jugador.getCartas().size() == 0){
+            System.out.println("Ganaste!");
+            return false;
+        }
+        if(manoMaquina.size() == 0){
+            System.out.println("Gano la máquina!");
+            return false;
+        }
+        return true;
+    }
+
+    public void verificarCartas(Jugador jugador){
+        if(jugador.getCartas().size() == 0){
+            actualizarTurno(false);
+        }
+        
+    }
+
+
     public void iniciarJuego(){
         repartirCartas();
         System.out.println("Se han repartido las cartas!");
         lineaJuego.add(tomarCartaAzar());
-        color = lineaJuego.get(0).getColor();
+        actualizarColor(lineaJuego.get(0).getColor());
         System.out.println("Se ha puesto una carta al azar en la linea de juego!");
-        boolean bandera = true;
         boolean repetir = false;
         Scanner sc = new Scanner(System.in);
 
 
-        while(bandera){
+        while(continuarJuego(jugador)){
             if(turno){
                 do{
                     Utilitaria.esperar(1);
@@ -221,31 +283,13 @@ public class Juego {
                     Carta c = jugador.getCarta(i);
                     boolean continuar = agregarCartaLinea(c, sc, false);
                     Utilitaria.esperar(1);
-                    if(continuar == false){
-                        System.out.println("Error, el color o numero no coincide. Intentar de nuevo? (Si/No)");
-                        String r = sc.nextLine();
-                        if(r.equalsIgnoreCase("si")){
-                            repetir = true;
-                        }else{
-                            jugador.getCartas().add(baraja.getCarta(0));
-                            baraja.getCartas().remove(0);
-                            System.out.println("Se ha agregado una carta a tu mano!");
-                            repetir = false;
-                        }
-                    }else{
-                        repetir = false;
-                    }
+                    repetir = validarCartaJugador(continuar, sc);
                 }while(repetir);
-                if(jugador.getCartas().size() == 1){
-                    System.out.println("UNO!");
-                }else if(jugador.getCartas().size() == 0){
-                    System.out.println("Ganaste!");
-                    bandera = false;
-                    turno = false;
-                }
+
+                verificarCartas(jugador);
                 System.out.println("");
             }else{
-                turno = true;
+                actualizarTurno(true);
             }
             reiniciarBaraja();
             if(turno){
@@ -260,16 +304,9 @@ public class Juego {
                     manoMaquina.add(0,baraja.getCarta(0));
                     baraja.getCartas().remove(0);
                 }
-                if(manoMaquina.size()== 1){
-                    System.out.println("UNO!");
-                }else if(manoMaquina.size() == 0){
-                    System.out.println("Gano la máquina!");
-                    bandera = false;
-                    turno = false;
-                }
                 System.out.println("");
             }else{
-                turno = true;
+                actualizarTurno(true);
             }
             Utilitaria.esperar(1);
 
